@@ -1,6 +1,8 @@
 package org.tech.finalprojectadb.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.tech.finalprojectadb.entity.Product;
 import org.tech.finalprojectadb.service.ProductService;
@@ -17,34 +19,34 @@ public class ProductController {
 	private final ProductService productService;
 
 	@GetMapping("/")
-	public List<Product> getAll() {
-		return productService.getAll();
+	public ResponseEntity<List<Product>> getAll() {
+		return new ResponseEntity<>(productService.getAll(), HttpStatus.OK);
 	}
 
 	@GetMapping("/by-brand")
-	public List<Product> getAllByBrand(@RequestParam List<String> brand) {
-		return productService.filterByBrand(brand);
+	public ResponseEntity<List<Product>> getAllByBrand(@RequestParam List<String> brand) {
+		return new ResponseEntity<>(productService.filterByBrand(brand), HttpStatus.OK);
 	}
 
 	@GetMapping("/by-model")
-	public List<Product> getAllByModel(@RequestParam List<String> model) {
-		return productService.filterByModel(model);
+	public ResponseEntity<List<Product>> getAllByModel(@RequestParam List<String> model) {
+		return new ResponseEntity<>(productService.filterByModel(model), HttpStatus.OK);
 	}
 
 	@GetMapping("/by-category")
-	public List<Product> getAllByCategory(@RequestParam List<Category> category) {
-		return productService.filterByCategory(category);
+	public ResponseEntity<List<Product>> getAllByCategory(@RequestParam List<Category> category) {
+		return new ResponseEntity<>(productService.filterByCategory(category), HttpStatus.OK);
 	}
 
 	@GetMapping("/by-price")
-	public List<Product> getAllBetweenPrice(@RequestParam(required = false) Optional<Integer> start,
+	public ResponseEntity<List<Product>> getAllBetweenPrice(@RequestParam(required = false) Optional<Integer> start,
 											@RequestParam(required = false) Optional<Integer> end) {
-		return productService.filterByPrice(start, end);
+		return new ResponseEntity<>(productService.filterByPrice(start, end), HttpStatus.OK);
 	}
 
 	@GetMapping("/{id}")
-	public Product getProductById(@PathVariable String id) {
-		return productService.getProductById(id);
+	public ResponseEntity<Product> getProductById(@PathVariable String id) {
+		return new ResponseEntity<>(productService.getProductById(id), HttpStatus.OK);
 	}
 
 }
