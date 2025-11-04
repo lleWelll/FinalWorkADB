@@ -1,8 +1,11 @@
 package org.tech.finalprojectadb.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.tech.finalprojectadb.entity.CustomUserDetails;
 import org.tech.finalprojectadb.entity.User;
 import org.tech.finalprojectadb.exceptions.UsernameAlreadyExistsException;
 import org.tech.finalprojectadb.repository.UserRepository;
@@ -40,6 +43,11 @@ public class UserService {
 
 	private boolean isValidPassword(RegistrationForm form) {
 		return form.password().equals(form.passwordConfirmation());
+	}
+
+	public String getCurrentUserId() {
+		CustomUserDetails authentication = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		return authentication.getUserId();
 	}
 
 

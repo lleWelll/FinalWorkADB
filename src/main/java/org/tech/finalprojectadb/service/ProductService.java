@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.tech.finalprojectadb.entity.Product;
 import org.tech.finalprojectadb.repository.ProductRepository;
+import org.tech.finalprojectadb.repository.UserActionRepository;
 import org.tech.finalprojectadb.util.Category;
 
 import java.util.List;
@@ -15,8 +16,12 @@ public class ProductService {
 
 	private final ProductRepository productRepository;
 
+	private final UserActionService userActionService;
+
 	public Product getProductById(String id) {
-		return productRepository.findById(id).orElseThrow(IllegalArgumentException::new);
+		Product product = productRepository.findById(id).orElseThrow(IllegalArgumentException::new);
+		userActionService.addViewAction(product);
+		return product;
 	}
 
 	public List<Product> getAll() {
