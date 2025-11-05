@@ -80,6 +80,8 @@ public class ProductService {
 	}
 
 	public List<Product> filterByCategory(List<Category> categories) {
+		categories.forEach(userActionService::addViewAction);
+
 		if (categories.size() > 1) {
 			return productRepository.findProductByCategoryIn(categories);
 		} else {

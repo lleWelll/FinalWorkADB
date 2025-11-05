@@ -4,6 +4,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 import org.tech.finalprojectadb.entity.UserAction;
 import org.tech.finalprojectadb.util.Action;
+import org.tech.finalprojectadb.util.Category;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,10 @@ public interface UserActionRepository extends MongoRepository<UserAction, String
 
 	Optional<UserAction> findByUserIdAndProductIdAndAction(String userId, String productId, Action action);
 
-	boolean existsByUserIdAndProductIdAndAction(String userID, String productId, Action action);
+	Optional<UserAction> findByUserIdAndCategoryAndAction(String userId, Category category, Action action);
+
+	boolean existsByUserIdAndProductIdAndAction(String userId, String productId, Action action);
+
+	boolean existsByUserIdAndCategoryAndAction(String userId, Category category, Action action);
 
 }

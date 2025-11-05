@@ -9,6 +9,7 @@ import org.tech.finalprojectadb.exceptions.EntityNotFoundException;
 import org.tech.finalprojectadb.exceptions.LikeActionDuplicateEntityException;
 import org.tech.finalprojectadb.repository.UserActionRepository;
 import org.tech.finalprojectadb.util.Action;
+import org.tech.finalprojectadb.util.Category;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,8 @@ public class UserActionService {
 		String userId = userService.getCurrentUserId();
 		return userActionRepository.findAllByUserIdAndActionInOrderByTimestampDesc(userId, actions);
 	}
+
+	/* ------------------------ By Product ------------------------ */
 
 	public void addViewAction(Product product) {
 		addAction(product, Action.VIEW);
@@ -62,6 +65,31 @@ public class UserActionService {
 		addAction(product, Action.PURCHASE);
 	}
 
+	/* ------------------------ For Categories ------------------------ */
+
+	public void addViewAction(Category category) {
+		addAction(category, Action.VIEW);
+	}
+
+	public void addLikeAction(Category category) {
+		addAction(category, Action.LIKE);
+	}
+
+	public void removeLikeAction(Category category) throws LikeActionDuplicateEntityException, EntityNotFoundException {
+		String userId = userService.getCurrentUserId();
+		Optional<UserAction> actionOptional = userActionRepository.findByUserIdAndCategoryAndAction(userId, category, Action.LIKE);
+		if (actionOptional.isEmpty()) {
+			log.warn("{} User Action for user: {} and category: {} not found, can't delete action", Action.LIKE, userId, category);
+			throw new EntityNotFoundException(Action.LIKE + " User Action for user: " + userId + " and category: " + category + " not found");
+		}
+
+		UserAction action = actionOptional.get();
+		removeAction(action);
+	}
+
+
+	/* ------------------------ Private ------------------------ */
+
 	private void addAction(Product product, Action actionType) {
 		String userId = userService.getCurrentUserId();
 
@@ -74,11 +102,30 @@ public class UserActionService {
 
 		UserAction action = new UserAction(userId, product.getId(), actionType);
 		userActionRepository.save(action);
-		log.info("LIKE action successfully added: product: {}, user: {}", product.getId(), userId);
+		log.info("User Action successfully added: product: {}, user: {}, action: {}", product.getId(), userId, action);
+	}
+
+	private void addAction(Category category, Action actionType) {
+		String userId = userService.getCurrentUserId();
+
+		// LIKE запись не будет добавлена если такая же запись уже существует
+		if (actionType.equals(Action.LIKE) &&
+				isExistsAction(userId, category, actionType)) {
+			log.info("LIKE action for category: {} and user: {} exists, can not add new {} action", category, userId, actionType);
+			throw new LikeActionDuplicateEntityException("LIKE action for category: " + category + " and user: " + userId + " exists, can not add new " + actionType + " action");
+		}
+
+		UserAction action = new UserAction(userId, category, actionType);
+		userActionRepository.save(action);
+		log.info("User Action successfully added: category: {}, user: {}, action: {}", category, userId, action);
 	}
 
 	private boolean isExistsAction(String userId, String productId, Action actionType) {
 		return userActionRepository.existsByUserIdAndProductIdAndAction(userId, productId, actionType);
+	}
+
+	private boolean isExistsAction(String userId, Category category, Action actionType) {
+		return userActionRepository.existsByUserIdAndCategoryAndAction(userId, category, actionType);
 	}
 
 	private void removeAction(UserAction action) throws EntityNotFoundException {
