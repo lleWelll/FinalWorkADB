@@ -23,6 +23,27 @@ public class ProductController {
 		return new ResponseEntity<>(productService.getAll(), HttpStatus.OK);
 	}
 
+	@PostMapping("/{id}/like")
+	public ResponseEntity<String> likeProductById(@PathVariable String id) {
+		return new ResponseEntity<>(productService.likeProduct(id), HttpStatus.OK);
+	}
+
+	@DeleteMapping("/{id}/like")
+	public ResponseEntity<String> deleteProductById(@PathVariable String id) {
+		productService.removeLike(id);
+		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	}
+
+	@PostMapping("/{id}/buy")
+	public ResponseEntity<String> buyProductById(@PathVariable String id) {
+		return new ResponseEntity<>(productService.purchaseProduct(id), HttpStatus.OK);
+	}
+
+	@GetMapping("/{id}")
+	public ResponseEntity<Product> getProductById(@PathVariable String id) {
+		return new ResponseEntity<>(productService.findProductById(id), HttpStatus.OK);
+	}
+
 	@GetMapping("/by-brand")
 	public ResponseEntity<List<Product>> getAllByBrand(@RequestParam List<String> brand) {
 		return new ResponseEntity<>(productService.filterByBrand(brand), HttpStatus.OK);
@@ -43,10 +64,4 @@ public class ProductController {
 											@RequestParam(required = false) Optional<Integer> end) {
 		return new ResponseEntity<>(productService.filterByPrice(start, end), HttpStatus.OK);
 	}
-
-	@GetMapping("/{id}")
-	public ResponseEntity<Product> getProductById(@PathVariable String id) {
-		return new ResponseEntity<>(productService.getProductById(id), HttpStatus.OK);
-	}
-
 }

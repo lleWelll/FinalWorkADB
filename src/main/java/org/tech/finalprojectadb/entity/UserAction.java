@@ -7,6 +7,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.tech.finalprojectadb.util.Action;
 
+import java.time.LocalDateTime;
+
 @Document(collection = "user_actions")
 @Data
 @NoArgsConstructor
@@ -23,9 +25,12 @@ public class UserAction {
 
 	private Action action;
 
+	private LocalDateTime timestamp;
+
 	public UserAction(String userId, String productId, Action action) {
 		this.userId = userId;
 		this.productId = productId;
 		this.action = action;
+		this.timestamp = LocalDateTime.now();
 	}
 }

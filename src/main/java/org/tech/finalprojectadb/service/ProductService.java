@@ -1,10 +1,12 @@
 package org.tech.finalprojectadb.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.tech.finalprojectadb.entity.Product;
+import org.tech.finalprojectadb.exceptions.EntityNotFoundException;
+import org.tech.finalprojectadb.exceptions.LikeActionDuplicateEntityException;
 import org.tech.finalprojectadb.repository.ProductRepository;
-import org.tech.finalprojectadb.repository.UserActionRepository;
 import org.tech.finalprojectadb.util.Category;
 
 import java.util.List;
@@ -12,16 +14,49 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
 	private final ProductRepository productRepository;
 
 	private final UserActionService userActionService;
 
-	public Product getProductById(String id) {
-		Product product = productRepository.findById(id).orElseThrow(IllegalArgumentException::new);
+	public String likeProduct(String id) {
+		Product product = getProductById(id);
+
+		try {
+			userActionService.addLikeAction(product);
+			return "Product '" + product + "' Liked";
+		} catch (LikeActionDuplicateEntityException e) {
+			return "Like already exists for this product: " + product;
+		}
+	}
+
+	public void removeLike(String id) {
+		Product product = getProductById(id);
+
+		try {
+			userActionService.removeLikeAction(product);
+			log.info("Like successfully removed from product: {}", product);
+		} catch (EntityNotFoundException e) {
+			log.info("There is no like on product: {}", product);
+		}
+	}
+
+	public String purchaseProduct(String id) {
+		Product product = getProductById(id);
+		userActionService.addPurchaseAction(product);
+		return "Product '" + product + "' Purchased";
+	}
+
+	public Product findProductById(String id) {
+		Product product = getProductById(id);
 		userActionService.addViewAction(product);
 		return product;
+	}
+
+	private Product getProductById(String id) {
+		return productRepository.findById(id).orElseThrow(IllegalArgumentException::new);
 	}
 
 	public List<Product> getAll() {
