@@ -19,6 +19,8 @@ public class ProductService {
 
 	private final ProductRepository productRepository;
 
+	private final UserService userService;
+
 	private final UserActionService userActionService;
 
 	private final CacheService cacheService;
@@ -27,7 +29,7 @@ public class ProductService {
 		Product product = getProductById(id);
 
 		try {
-			userActionService.addLikeAction(product);
+			userActionService.addLikeAction(userService.getCurrentUserId(), product);
 			return "Product '" + product + "' Liked";
 		} catch (LikeActionDuplicateEntityException e) {
 			return "Like already exists for this product: " + product;
@@ -38,7 +40,7 @@ public class ProductService {
 		Product product = getProductById(id);
 
 		try {
-			userActionService.removeLikeAction(product);
+			userActionService.removeLikeAction(userService.getCurrentUserId(), product);
 			log.info("Like successfully removed from product: {}", product);
 		} catch (EntityNotFoundException e) {
 			log.info("There is no like on product: {}", product);
@@ -47,13 +49,13 @@ public class ProductService {
 
 	public String purchaseProduct(String id) {
 		Product product = getProductById(id);
-		userActionService.addPurchaseAction(product);
+		userActionService.addPurchaseAction(userService.getCurrentUserId(), product);
 		return "Product '" + product + "' Purchased";
 	}
 
 	public Product findProductById(String id) {
 		Product product = getProductById(id);
-		userActionService.addViewAction(product);
+		userActionService.addViewAction(userService.getCurrentUserId(), product);
 		return product;
 	}
 
@@ -78,7 +80,8 @@ public class ProductService {
 	}
 
 	public List<Product> filterByCategory(List<Category> categories) {
-		categories.forEach(userActionService::addViewAction);
+		String userId = userService.getCurrentUserId();
+		categories.forEach((cat) -> userActionService.addViewAction(userId, cat));
 
 		if (categories.size() > 1) {
 			return productRepository.findProductByCategoryIn(categories);
@@ -102,7 +105,7 @@ public class ProductService {
 	private Product getProductById(String id) {
 		return cacheService.getProductCache(id).orElseGet(
 				() -> {
-					Product pr = productRepository.findById(id).orElseThrow(IllegalArgumentException::new);
+					Product pr = productRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Product: " + id + " is not found"));
 					return cacheService.setAndReturnProductCache(pr);
 				}
 		);

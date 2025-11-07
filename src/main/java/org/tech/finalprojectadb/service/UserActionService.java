@@ -2,6 +2,7 @@ package org.tech.finalprojectadb.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.tech.finalprojectadb.entity.Product;
 import org.tech.finalprojectadb.entity.UserAction;
@@ -21,36 +22,40 @@ public class UserActionService {
 
 	private final UserActionRepository userActionRepository;
 
-	private final UserService userService;
+//	private final UserService userService;
 
-	public List<UserAction> getAll() {
-		String userId = userService.getCurrentUserId();
+	public List<UserAction> getAll(String userId) {
+//		String userId = userService.getCurrentUserId();
 		return userActionRepository.findAllByUserIdOrderByTimestampDesc(userId);
 	}
 
-	public List<UserAction> filterByAction(List<Action> actions) {
-		String userId = userService.getCurrentUserId();
+	public List<UserAction> filterByAction(String userId, List<Action> actions) {
+//		String userId = userService.getCurrentUserId();
 		return userActionRepository.findAllByUserIdAndActionInOrderByTimestampDesc(userId, actions);
+	}
+
+	public List<UserAction> filterByUserIdAndLimit(String userId, int limit) {
+		return userActionRepository.findAllByUserIdOrderByTimestampDesc(userId, Limit.of(limit));
 	}
 
 	/* ------------------------ By Product ------------------------ */
 
-	public void addViewAction(Product product) {
-		addAction(product, Action.VIEW);
+	public void addViewAction(String userId, Product product) {
+		addAction(userId, product, Action.VIEW);
 	}
 
 	/**
 	 * Может быть добавлен только одна LIKE запись для конкретного продукта и для конкретного пользователя
 	 */
-	public void addLikeAction(Product product) throws LikeActionDuplicateEntityException {
-		addAction(product, Action.LIKE);
+	public void addLikeAction(String userId, Product product) throws LikeActionDuplicateEntityException {
+		addAction(userId, product, Action.LIKE);
 	}
 
 	/**
 	 * Предпологается, что может существовать только одна LIKE запись для конкретного продукта и для конкретного пользователя
 	 */
-	public void removeLikeAction(Product product) throws LikeActionDuplicateEntityException, EntityNotFoundException {
-		String userId = userService.getCurrentUserId();
+	public void removeLikeAction(String userId, Product product) throws LikeActionDuplicateEntityException, EntityNotFoundException {
+//		String userId = userService.getCurrentUserId();
 		Optional<UserAction> actionOptional = userActionRepository.findByUserIdAndProductIdAndAction(userId, product.getId(), Action.LIKE);
 		if (actionOptional.isEmpty()) {
 			log.warn("{} User Action for user: {} and product: {} not found, can't delete action", Action.LIKE, userId, product.getId());
@@ -61,22 +66,22 @@ public class UserActionService {
 		removeAction(action);
 	}
 
-	public void addPurchaseAction(Product product) {
-		addAction(product, Action.PURCHASE);
+	public void addPurchaseAction(String userId, Product product) {
+		addAction(userId, product, Action.PURCHASE);
 	}
 
 	/* ------------------------ For Categories ------------------------ */
 
-	public void addViewAction(Category category) {
-		addAction(category, Action.VIEW);
+	public void addViewAction(String userId, Category category) {
+		addAction(userId, category, Action.VIEW);
 	}
 
-	public void addLikeAction(Category category) {
-		addAction(category, Action.LIKE);
+	public void addLikeAction(String userId, Category category) {
+		addAction(userId, category, Action.LIKE);
 	}
 
-	public void removeLikeAction(Category category) throws LikeActionDuplicateEntityException, EntityNotFoundException {
-		String userId = userService.getCurrentUserId();
+	public void removeLikeAction(String userId, Category category) throws LikeActionDuplicateEntityException, EntityNotFoundException {
+//		String userId = userService.getCurrentUserId();
 		Optional<UserAction> actionOptional = userActionRepository.findByUserIdAndCategoryAndAction(userId, category, Action.LIKE);
 		if (actionOptional.isEmpty()) {
 			log.warn("{} User Action for user: {} and category: {} not found, can't delete action", Action.LIKE, userId, category);
@@ -90,8 +95,8 @@ public class UserActionService {
 
 	/* ------------------------ Private ------------------------ */
 
-	private void addAction(Product product, Action actionType) {
-		String userId = userService.getCurrentUserId();
+	private void addAction(String userId, Product product, Action actionType) {
+//		String userId = userService.getCurrentUserId();
 
 		// LIKE запись не будет добавлена если такая же запись уже существует
 		if (actionType.equals(Action.LIKE) &&
@@ -105,8 +110,8 @@ public class UserActionService {
 		log.info("User Action successfully added: product: {}, user: {}, action: {}", product.getId(), userId, action);
 	}
 
-	private void addAction(Category category, Action actionType) {
-		String userId = userService.getCurrentUserId();
+	private void addAction(String userId, Category category, Action actionType) {
+//		String userId = userService.getCurrentUserId();
 
 		// LIKE запись не будет добавлена если такая же запись уже существует
 		if (actionType.equals(Action.LIKE) &&

@@ -16,13 +16,15 @@ public class CategoryService {
 
 	private final UserActionService userActionService;
 
+	private final UserService userService;
+
 	public String getAll() {
 		return Arrays.toString(Category.values());
 	}
 
 	public String likeCategory(Category category) {
 		try {
-			userActionService.addLikeAction(category);
+			userActionService.addLikeAction(userService.getCurrentUserId(), category);
 			return "Category '" + category + "' Liked";
 		} catch (LikeActionDuplicateEntityException e) {
 			return "Like already exists for this category: " + category;
@@ -31,7 +33,7 @@ public class CategoryService {
 
 	public void removeCategory(Category category) {
 		try {
-			userActionService.removeLikeAction(category);
+			userActionService.removeLikeAction(userService.getCurrentUserId(), category);
 			log.info("Like successfully removed from category: {}", category);
 		} catch (EntityNotFoundException e) {
 			log.info("There is no like on category: {}", category);
