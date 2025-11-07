@@ -21,6 +21,8 @@ public class ProductService {
 
 	private final UserActionService userActionService;
 
+	private final CacheService cacheService;
+
 	public String likeProduct(String id) {
 		Product product = getProductById(id);
 
@@ -53,10 +55,6 @@ public class ProductService {
 		Product product = getProductById(id);
 		userActionService.addViewAction(product);
 		return product;
-	}
-
-	private Product getProductById(String id) {
-		return productRepository.findById(id).orElseThrow(IllegalArgumentException::new);
 	}
 
 	public List<Product> getAll() {
@@ -94,10 +92,19 @@ public class ProductService {
 			return productRepository.findProductByPriceIsBetween(start.get(), Integer.MAX_VALUE);
 		} else if (start.isEmpty() && end.isPresent()) {
 			return productRepository.findProductByPriceIsBetween(0, end.get());
-		} else if (start.isPresent() && end.isPresent()){
+		} else if (start.isPresent() && end.isPresent()) {
 			return productRepository.findProductByPriceIsBetween(start.get(), end.get());
 		} else {
 			return getAll();
 		}
+	}
+
+	private Product getProductById(String id) {
+		return cacheService.getProductCache(id).orElseGet(
+				() -> {
+					Product pr = productRepository.findById(id).orElseThrow(IllegalArgumentException::new);
+					return cacheService.setAndReturnProductCache(pr);
+				}
+		);
 	}
 }
