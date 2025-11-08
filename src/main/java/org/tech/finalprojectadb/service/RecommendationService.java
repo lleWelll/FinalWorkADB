@@ -31,26 +31,18 @@ public class RecommendationService {
 	private final ProductService productService;
 
 	public List<Product> getRecommendedProducts(String userId, Integer limit) {
+		log.info(">>>> Starting process of recommendation for user: {} with limit: {}", userId, limit);
 		int maxPrice = productService.getMostExpensiveProduct().getPrice();
 		String[] allBrands = productService.getAllUniqueBrands().toArray(String[]::new);
-
+		List<Product> allProducts = productService.getAll();
 
 		List<UserActionFullInfo> userActionsAndProduct = userActionService.getUserActionsAndProductsByUserId(userId);
-		List<ProductEmbedding> productEmbeddings = userActionsAndProduct.stream()
-				.map(userActionFullInfo -> {
-					ProductEmbedding productEmbedding = new ProductEmbedding();
-					productEmbedding.productId = userActionFullInfo.getProduct().getId();
-					productEmbedding.embedding = embedProduct(userActionFullInfo.getProduct(), allBrands, Category.values(), maxPrice);
-					productEmbedding.weight = userActionFullInfo.getAction().getWeight();
-					return productEmbedding;
-				})
-				.toList();
+		Map<String, ProductEmbedding> uniqueEmbedding = getUniqueEmbeddings(userActionsAndProduct, allBrands, maxPrice);
 
-		Map<String, ProductEmbedding> uniqueEmbedding = getUniqueEmbeddings(productEmbeddings);
-		double[] userProfile = calculateUserProfile(uniqueEmbedding, productEmbeddings.get(0).embedding.length);
+		double[] userProfile = calculateUserProfile(uniqueEmbedding);
 
-		List<Product> allProducts = productService.getAll();
-		Map<String, Double> similarityTable = new HashMap<>(); // [ProductId - similarityScore]
+		// similarityTable = [ProductId - SimilarityScore]
+		Map<String, Double> similarityTable = new HashMap<>();
 		for (Product product : allProducts) {
 			double[] embedding = embedProduct(product, allBrands, Category.values(), maxPrice);
 			similarityTable.put(product.getId(), calculateCosineSimilarity(userProfile, embedding));
@@ -60,13 +52,16 @@ public class RecommendationService {
 			limit = 10;
 		}
 
-		return allProducts.stream()
+		List<Product> recommended = allProducts.stream()
 				.filter(p -> similarityTable.containsKey(p.getId()))
 				.sorted(Comparator.comparingDouble(
 								(Product p) -> similarityTable.getOrDefault(p.getId(), -1d))
 						.reversed())
 				.limit(limit)
 				.toList();
+
+		log.info("<<<<< Recommendation process ended successfully with result: {}", recommended);
+		return recommended;
 	}
 
 
@@ -96,27 +91,40 @@ public class RecommendationService {
 		return MathArrays.concatenate(brandOneHot, categoryOneHot, normalizedPrice);
 	}
 
-	private Map<String, ProductEmbedding> getUniqueEmbeddings(List<ProductEmbedding> embeddings) {
+	private Map<String, ProductEmbedding> getUniqueEmbeddings(List<UserActionFullInfo> action, String[] allBrands, int maxPrice) {
 		Map<String, ProductEmbedding> uniqueEmbeddings = new HashMap<>();
-		for (ProductEmbedding embedding : embeddings) {
-			if (uniqueEmbeddings.containsKey(embedding.productId)) {
-				embedding.weight = uniqueEmbeddings.get(embedding.productId).weight + embedding.weight;
-				uniqueEmbeddings.put(embedding.productId, embedding);
-			} else {
-				uniqueEmbeddings.put(embedding.productId, embedding);
-			}
-		}
+		action.stream()
+				.map(userActionFullInfo -> {
+					ProductEmbedding productEmbedding = new ProductEmbedding();
+					productEmbedding.productId = userActionFullInfo.getProduct().getId();
+					productEmbedding.embedding = embedProduct(userActionFullInfo.getProduct(), allBrands, Category.values(), maxPrice);
+					productEmbedding.weight = userActionFullInfo.getAction().getWeight();
+					return productEmbedding;
+				})
+				.forEach(productEmbedding -> {
+					if (uniqueEmbeddings.containsKey(productEmbedding.productId)) {
+						productEmbedding.weight = uniqueEmbeddings.get(productEmbedding.productId).weight + productEmbedding.weight;
+						uniqueEmbeddings.put(productEmbedding.productId, productEmbedding);
+					} else {
+						uniqueEmbeddings.put(productEmbedding.productId, productEmbedding);
+					}
+				});
 		return uniqueEmbeddings;
 	}
 
-	private double[] calculateUserProfile(Map<String, ProductEmbedding> embeddings, int embeddingSize) {
-		double[] userProfile = new double[embeddingSize];
+	private double[] calculateUserProfile(Map<String, ProductEmbedding> embeddings) {
+		double[] userProfile = new double[getEmbeddingDimension(embeddings)];
 		for (ProductEmbedding productEmbedding : embeddings.values()) {
 			double[] scale = MathArrays.scale(productEmbedding.weight, productEmbedding.embedding);
 			userProfile = MathArrays.ebeAdd(userProfile, scale);
 		}
 
 		return userProfile;
+	}
+
+	private int getEmbeddingDimension(Map<String, ProductEmbedding> embeddingMap) {
+		String firstKey = new ArrayList<>(embeddingMap.keySet()).get(0);
+		return embeddingMap.get(firstKey).embedding.length;
 	}
 
 	private double calculateCosineSimilarity(double[] pointA, double[] pointB) {
