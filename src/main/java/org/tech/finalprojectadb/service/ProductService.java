@@ -108,11 +108,21 @@ public class ProductService {
 	}
 
 	public List<String> getAllUniqueBrands() {
-		return productRepository.findAllUniqueBrands();
+		List<String> res = cacheService.getAllBrandsCache();
+		if (res == null) {
+			res = productRepository.findAllUniqueBrands();
+			return cacheService.setAndReturnAllBrandsCache(res);
+		}
+		return res;
 	}
 
 	public Product getMostExpensiveProduct() {
-		return productRepository.findTopByOrderByPriceDesc();
+		return cacheService.getMostExpensiveProductCache().orElseGet(
+				() -> {
+					Product pr = productRepository.findTopByOrderByPriceDesc();
+					return cacheService.setAndReturnMostExpensiveProductCache(pr);
+				}
+		);
 	}
 
 	private Product getProductById(String id) {

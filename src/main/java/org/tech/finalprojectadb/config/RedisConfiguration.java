@@ -11,6 +11,8 @@ import org.tech.finalprojectadb.entity.Product;
 import org.tech.finalprojectadb.entity.UserAction;
 import org.tech.finalprojectadb.util.Category;
 
+import java.util.List;
+
 @Configuration
 public class RedisConfiguration {
 
@@ -41,6 +43,15 @@ public class RedisConfiguration {
 	@Bean
 	public RedisTemplate<String, Category> categoryRedisTemplate() {
 		RedisTemplate<String, Category> redisTemplate = new RedisTemplate<>();
+		redisTemplate.setConnectionFactory(lettuceConnectionFactory());
+		redisTemplate.setKeySerializer(new StringRedisSerializer());
+		redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+		return redisTemplate;
+	}
+
+	@Bean
+	public RedisTemplate<String, List<String>> generalRedisTemplate() {
+		RedisTemplate<String, List<String>> redisTemplate = new RedisTemplate<>();
 		redisTemplate.setConnectionFactory(lettuceConnectionFactory());
 		redisTemplate.setKeySerializer(new StringRedisSerializer());
 		redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
