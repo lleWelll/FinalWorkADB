@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.tech.finalprojectadb.entity.Product;
 import org.tech.finalprojectadb.entity.UserAction;
+import org.tech.finalprojectadb.service.RecommendationService;
 import org.tech.finalprojectadb.service.UserService;
 import org.tech.finalprojectadb.util.RegistrationForm;
 import org.tech.finalprojectadb.util.UserFullInfo;
@@ -17,6 +19,8 @@ import java.util.List;
 public class UserController {
 
 	private final UserService userService;
+
+	private final RecommendationService recommendationService;
 
 	@PostMapping("/registration")
 	public ResponseEntity<String> registerUser(@RequestBody RegistrationForm body) {
@@ -45,6 +49,13 @@ public class UserController {
 		String currentUserId = userService.getCurrentUserId();
 		List<UserAction> userActionList = userService.getUserHistory(currentUserId, limit, all);
 		return new ResponseEntity<>(userActionList, HttpStatus.OK);
+	}
+
+	@GetMapping("/me/recommendation")
+	public ResponseEntity<List<Product>> getRecommendations(@RequestParam(required = false) Integer limit) {
+		String currentUserId = userService.getCurrentUserId();
+		List<Product> recommended = recommendationService.getRecommendedProducts(currentUserId, limit);
+		return new ResponseEntity<>(recommended, HttpStatus.OK);
 	}
 
 }

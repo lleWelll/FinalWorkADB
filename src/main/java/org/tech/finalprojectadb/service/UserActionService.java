@@ -11,6 +11,7 @@ import org.tech.finalprojectadb.exceptions.LikeActionDuplicateEntityException;
 import org.tech.finalprojectadb.repository.UserActionRepository;
 import org.tech.finalprojectadb.util.Action;
 import org.tech.finalprojectadb.util.Category;
+import org.tech.finalprojectadb.util.UserActionFullInfo;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,20 +23,20 @@ public class UserActionService {
 
 	private final UserActionRepository userActionRepository;
 
-//	private final UserService userService;
-
 	public List<UserAction> getAll(String userId) {
-//		String userId = userService.getCurrentUserId();
 		return userActionRepository.findAllByUserIdOrderByTimestampDesc(userId);
 	}
 
 	public List<UserAction> filterByAction(String userId, List<Action> actions) {
-//		String userId = userService.getCurrentUserId();
 		return userActionRepository.findAllByUserIdAndActionInOrderByTimestampDesc(userId, actions);
 	}
 
 	public List<UserAction> filterByUserIdAndLimit(String userId, int limit) {
 		return userActionRepository.findAllByUserIdOrderByTimestampDesc(userId, Limit.of(limit));
+	}
+
+	public List<UserActionFullInfo> getUserActionsAndProductsByUserId(String userId) {
+		return userActionRepository.findUserActionFullInfoByUserId(userId);
 	}
 
 	/* ------------------------ By Product ------------------------ */
@@ -55,7 +56,6 @@ public class UserActionService {
 	 * Предпологается, что может существовать только одна LIKE запись для конкретного продукта и для конкретного пользователя
 	 */
 	public void removeLikeAction(String userId, Product product) throws LikeActionDuplicateEntityException, EntityNotFoundException {
-//		String userId = userService.getCurrentUserId();
 		Optional<UserAction> actionOptional = userActionRepository.findByUserIdAndProductIdAndAction(userId, product.getId(), Action.LIKE);
 		if (actionOptional.isEmpty()) {
 			log.warn("{} User Action for user: {} and product: {} not found, can't delete action", Action.LIKE, userId, product.getId());
@@ -81,7 +81,6 @@ public class UserActionService {
 	}
 
 	public void removeLikeAction(String userId, Category category) throws LikeActionDuplicateEntityException, EntityNotFoundException {
-//		String userId = userService.getCurrentUserId();
 		Optional<UserAction> actionOptional = userActionRepository.findByUserIdAndCategoryAndAction(userId, category, Action.LIKE);
 		if (actionOptional.isEmpty()) {
 			log.warn("{} User Action for user: {} and category: {} not found, can't delete action", Action.LIKE, userId, category);
@@ -96,8 +95,6 @@ public class UserActionService {
 	/* ------------------------ Private ------------------------ */
 
 	private void addAction(String userId, Product product, Action actionType) {
-//		String userId = userService.getCurrentUserId();
-
 		// LIKE запись не будет добавлена если такая же запись уже существует
 		if (actionType.equals(Action.LIKE) &&
 				isExistsAction(userId, product.getId(), actionType)) {
@@ -111,8 +108,6 @@ public class UserActionService {
 	}
 
 	private void addAction(String userId, Category category, Action actionType) {
-//		String userId = userService.getCurrentUserId();
-
 		// LIKE запись не будет добавлена если такая же запись уже существует
 		if (actionType.equals(Action.LIKE) &&
 				isExistsAction(userId, category, actionType)) {

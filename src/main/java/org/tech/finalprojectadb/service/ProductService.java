@@ -11,6 +11,7 @@ import org.tech.finalprojectadb.util.Category;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -63,6 +64,10 @@ public class ProductService {
 		return productRepository.findAll();
 	}
 
+	public List<Product> getAllByIds(Set<String> ids) {
+		return productRepository.findProductsByIdIn(ids);
+	}
+
 	public List<Product> filterByBrand(List<String> brands) {
 		if (brands.size() > 1) {
 			return productRepository.findProductByBrandIn(brands);
@@ -100,6 +105,14 @@ public class ProductService {
 		} else {
 			return getAll();
 		}
+	}
+
+	public List<String> getAllUniqueBrands() {
+		return productRepository.findAllUniqueBrands();
+	}
+
+	public Product getMostExpensiveProduct() {
+		return productRepository.findTopByOrderByPriceDesc();
 	}
 
 	private Product getProductById(String id) {
