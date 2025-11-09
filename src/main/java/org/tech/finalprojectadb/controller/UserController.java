@@ -1,5 +1,11 @@
 package org.tech.finalprojectadb.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +19,7 @@ import org.tech.finalprojectadb.util.UserFullInfo;
 
 import java.util.List;
 
+@Tag(name = "UserController", description = "Операции над пользователями")
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
@@ -22,6 +29,11 @@ public class UserController {
 
 	private final RecommendationService recommendationService;
 
+	@Operation(summary = "Регистрация нового пользователя")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Регистрирует нового пользователя"),
+			@ApiResponse(responseCode = "400", description = "Указанное имя пользователя уже существует, невозможно создать нового пользователя")
+	})
 	@PostMapping("/registration")
 	public ResponseEntity<String> registerUser(@RequestBody RegistrationForm body) {
 		try {
@@ -31,28 +43,47 @@ public class UserController {
 		}
 	}
 
+	@Operation(summary = "Информацию о текущем пользователе")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Возвращает информацию о текущем пользователе: Имя пользователя и список последних действий"),
+	})
 	@GetMapping("/me")
-	public ResponseEntity<UserFullInfo> getUserInformation(@RequestParam(required = false) Integer limit) {
+	public ResponseEntity<UserFullInfo> getUserInformation(
+			@Parameter(name = "limit", description = "Ограничение для вывода последних действий пользователя (по умолчанию - 10)") @RequestParam(required = false) Integer limit) {
 		String currentUserId = userService.getCurrentUserId();
 		return new ResponseEntity<>(userService.getFullInfo(currentUserId, limit), HttpStatus.OK);
 	}
 
+	@Operation(summary = "Имя текущего пользователя")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Возвращает имя текущего пользователя"),
+	})
 	@GetMapping("/me/username")
 	public ResponseEntity<String> getUsername() {
 		String currentUserId = userService.getCurrentUserId();
 		return new ResponseEntity<>(userService.findById(currentUserId).getUsername(), HttpStatus.OK);
 	}
 
+	@Operation(summary = "История текущего пользователя")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Возвращает последние действия над продуктами текущего пользователя"),
+	})
 	@GetMapping("/me/history")
-	public ResponseEntity<List<UserAction>> getUserHistory(@RequestParam(required = false) Integer limit,
-														   @RequestParam(required = false) Boolean all) {
+	public ResponseEntity<List<UserAction>> getUserHistory(
+			@Parameter(name = "limit", description = "Ограничение для вывода последних действий пользователя (по умолчанию - 10)") @RequestParam(required = false) Integer limit,
+			@Parameter(name = "all", description = "Фильтрация действий. При значении 'false' будут получены последние действия пользователя не включая 'VIEW' действия (по умолчанию - true)") @RequestParam(required = false) Boolean all) {
 		String currentUserId = userService.getCurrentUserId();
 		List<UserAction> userActionList = userService.getUserHistory(currentUserId, limit, all);
 		return new ResponseEntity<>(userActionList, HttpStatus.OK);
 	}
 
+	@Operation(summary = "Список рекомендованных продуктов")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Возвращает список рекомендованных продуктов на основе его действий"),
+	})
 	@GetMapping("/me/recommendation")
-	public ResponseEntity<List<Product>> getRecommendations(@RequestParam(required = false) Integer limit) {
+	public ResponseEntity<List<Product>> getRecommendations(
+			@Parameter(name = "limit", description = "Ограничение для вывода количества продуктов (по умолчанию - 10)")  @RequestParam(required = false) Integer limit) {
 		String currentUserId = userService.getCurrentUserId();
 		List<Product> recommended = recommendationService.getRecommendedProducts(currentUserId, limit);
 		return new ResponseEntity<>(recommended, HttpStatus.OK);

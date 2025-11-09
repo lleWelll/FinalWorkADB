@@ -15,5 +15,6 @@ logging:
     org.mongodb.driver.protocol.command: DEBUG
     org.mongodb.driver.protocol.query: DEBUG
 
+
 server:
   port: 8080
