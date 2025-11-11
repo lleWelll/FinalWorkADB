@@ -3,18 +3,22 @@ spring:
     name: FinalProjectADB
   data:
     mongodb:
-      uri: mongodb://localhost:27017
       database: final
       auto-index-creation: true
     redis:
-      url: redis://localhost:6379
-      username: client
-      password: client
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
 logging:
   level:
     org.mongodb.driver.protocol.command: DEBUG
     org.mongodb.driver.protocol.query: DEBUG
 
-
 server:
   port: 8080
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger
+    operationsSorter: method

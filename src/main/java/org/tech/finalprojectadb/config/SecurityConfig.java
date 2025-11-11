@@ -33,10 +33,10 @@ public class SecurityConfig {
 				.csrf(AbstractHttpConfigurer::disable)
 				.authorizeHttpRequests(authorize -> {
 					authorize.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll();
+					authorize.requestMatchers("/swagger-ui/index.html").permitAll();
 					authorize.requestMatchers("/api/v1/users/registration").permitAll();
 					authorize.requestMatchers("/v3/api-docs").permitAll();
 					authorize.requestMatchers("/v3/api-docs.yaml").permitAll();
-					authorize.requestMatchers("/swagger-ui/index.html").permitAll();
 					authorize.anyRequest().authenticated();
 				})
 				.httpBasic(Customizer.withDefaults())

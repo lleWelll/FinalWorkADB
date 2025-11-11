@@ -1,11 +1,14 @@
 package org.tech.finalprojectadb.config;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.tech.finalprojectadb.entity.Product;
 import org.tech.finalprojectadb.entity.UserAction;
@@ -14,11 +17,20 @@ import org.tech.finalprojectadb.util.Category;
 import java.util.List;
 
 @Configuration
+@ConfigurationProperties(prefix = "spring.data.redis")
+@Slf4j
+@Getter
+@Setter
 public class RedisConfiguration {
+
+	private String host;
+
+	private int port;
 
 	@Bean
 	public LettuceConnectionFactory lettuceConnectionFactory() {
-		return new LettuceConnectionFactory();
+		log.info("<<< Creating Lettuce Connection with host {} and port {}", host, port);
+		return new LettuceConnectionFactory(host, port);
 	}
 
 	@Bean
