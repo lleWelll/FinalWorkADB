@@ -11,11 +11,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.tech.finalprojectadb.entity.Product;
+import org.tech.finalprojectadb.entity.User;
 import org.tech.finalprojectadb.entity.UserAction;
+import org.tech.finalprojectadb.exceptions.EntityNotFoundException;
 import org.tech.finalprojectadb.service.RecommendationService;
 import org.tech.finalprojectadb.service.UserService;
 import org.tech.finalprojectadb.util.RegistrationForm;
 import org.tech.finalprojectadb.util.UserFullInfo;
+import org.tech.finalprojectadb.util.UsernameForm;
 
 import java.util.List;
 
@@ -43,7 +46,7 @@ public class UserController {
 		}
 	}
 
-	@Operation(summary = "Информацию о текущем пользователе")
+	@Operation(summary = "Информация о текущем пользователе")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Возвращает информацию о текущем пользователе: Имя пользователя и список последних действий"),
 	})
@@ -52,6 +55,18 @@ public class UserController {
 			@Parameter(name = "limit", description = "Ограничение для вывода последних действий пользователя (по умолчанию - 10)") @RequestParam(required = false) Integer limit) {
 		String currentUserId = userService.getCurrentUserId();
 		return new ResponseEntity<>(userService.getFullInfo(currentUserId, limit), HttpStatus.OK);
+	}
+
+	@Operation(summary = "Изменение имени пользователя")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Имя пользователя успешно изменено"),
+			@ApiResponse(responseCode = "404", description = "Пользователь не найден"),
+			@ApiResponse(responseCode = "400", description = "Указанное имя пользователя уже существует")
+	})
+	@PostMapping("/me/update/username")
+	public ResponseEntity<String> updateUserName(@RequestBody UsernameForm username) {
+		String currentUserId = userService.getCurrentUserId();
+		return new ResponseEntity<>(userService.updateUsername(currentUserId, username.username()).getUsername(), HttpStatus.OK);
 	}
 
 	@Operation(summary = "Имя текущего пользователя")

@@ -128,7 +128,7 @@ public class ProductService {
 	private Product getProductById(String id) {
 		return cacheService.getProductCache(id).orElseGet(
 				() -> {
-					Product pr = productRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Product: " + id + " is not found"));
+					Product pr = productRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Product: " + id + " is not found"));
 					return cacheService.setAndReturnProductCache(pr);
 				}
 		);
