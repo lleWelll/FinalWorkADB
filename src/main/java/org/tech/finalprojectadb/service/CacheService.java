@@ -1,10 +1,15 @@
 package org.tech.finalprojectadb.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.tech.finalprojectadb.entity.Product;
+import org.tech.finalprojectadb.entity.User;
 import org.tech.finalprojectadb.entity.UserAction;
 
 import java.util.List;
@@ -23,11 +28,34 @@ public class CacheService {
 
 	private final RedisTemplate<String, List<String>> generalRedisTemplate;
 
+	private final StringRedisTemplate redisTemplate;
+
+	private final ObjectMapper objectMapper = new ObjectMapper();
+
+
+	/* ----------------- GET ----------------- */
+
 	public Optional<Product> getProductCache(String productId) {
 		String key = generateProductKey(productId);
 		Optional<Product> product = Optional.ofNullable(productRedisTemplate.opsForValue().get(key));
 		log.info("CACHE: Getting key: {} from cache: {}", key, product);
 		return product;
+	}
+
+	public List<Product> getAllProductCache() {
+		String key = generateAllProductKey();
+		String json = redisTemplate.opsForValue().get(key);
+
+		try {
+			if (json == null) {
+				return null;
+			}
+			log.info("CACHE: Getting key: {} from cache: {}", key, json);
+			return objectMapper.readValue(json, new TypeReference<List<Product>>() {});
+		} catch (JsonProcessingException e) {
+			log.error("Error occured  while parsing: {}", e.getMessage());
+			throw new RuntimeException(e);
+		}
 	}
 
 	public Optional<Product> getMostExpensiveProductCache() {
@@ -43,6 +71,46 @@ public class CacheService {
 		List<String> result = generalRedisTemplate.opsForValue().get(key);
 		log.info("CACHE: Getting key: {} from cache", key);
 		return result;
+	}
+
+	public Optional<User> getUserCache(String identifier, String identifierType) {
+		String key;
+		if (identifierType.equals("username")) {
+			key = generateUserCacheByName(identifier);
+		} else {
+			key = generateUserCacheById(identifier);
+		}
+
+		String json = redisTemplate.opsForValue().get(key);
+		log.info("CACHE: Getting key: {} from cache", key);
+
+		try {
+			if (json == null) {
+				return Optional.empty();
+			}
+			return Optional.of(objectMapper.readValue(json, User.class));
+		} catch (JsonProcessingException e) {
+			log.error("Error occured  while parsing: {}", e.getMessage());
+			throw new RuntimeException(e);
+		}
+	}
+
+
+
+	/* ----------------- SET ----------------- */
+
+	public List<Product> setAndReturnAllProductCache(List<Product> allProducts) {
+		String key = generateAllProductKey();
+		log.info("CACHE: Setting new key: {} to cache", key);
+
+		try {
+			String json = objectMapper.writeValueAsString(allProducts);
+			redisTemplate.opsForValue().set(key, json, 30, TimeUnit.MINUTES);
+			return allProducts;
+		} catch (JsonProcessingException e) {
+			log.error("Error occured  while parsing: {}", e.getMessage());
+			throw new RuntimeException(e);
+		}
 	}
 
 	public List<String> setAndReturnAllBrandsCache(List<String> allBrands) {
@@ -66,24 +134,36 @@ public class CacheService {
 		return product;
 	}
 
-	public Optional<UserAction> getUserActionCache(String actionId) {
-		String key = generateProductKey(actionId);
-		Optional<UserAction> userAction = Optional.ofNullable(userActionRedisTemplate.opsForValue().get(key));
-		log.info("CACHE: Getting key: {} from cache: {}", key, userAction);
-		return userAction;
-	}
+	public User setAndReturnUserCache(User user, String identifierType) {
+		String key;
+		if (identifierType.equals("username")) {
+			key = generateUserCacheByName(user.getUsername());
+		} else {
+			key = generateUserCacheById(user.getId());
+		}
 
-	public UserAction setAndReturnUserActionCache(UserAction userAction) {
-		String key = generateUserActionKey(userAction.getId());
 		log.info("CACHE: Setting new key: {} to cache", key);
-		userActionRedisTemplate.opsForValue().set(key, userAction, 5, TimeUnit.MINUTES);
-		return userAction;
+		try {
+			String json = objectMapper.writeValueAsString(user);
+			redisTemplate.opsForValue().set(key, json, 5, TimeUnit.MINUTES);
+			return user;
+		} catch (JsonProcessingException e) {
+			log.error("Error occured  while parsing: {}", e.getMessage());
+			throw new RuntimeException(e);
+		}
 	}
 
+
+
+	/* ----------------- KEYS ----------------- */
 
 	private String generateProductKey(String id) {
 		final String key = "products:";
 		return key + id;
+	}
+
+	private String generateAllProductKey() {
+		return "products:all";
 	}
 
 	private String generateMostExpensiveProductKey() {
@@ -97,5 +177,13 @@ public class CacheService {
 
 	private String generateBrandsKey() {
 		return "products:all_brands";
+	}
+
+	private String generateUserCacheByName(String username) {
+		return "users:username:" + username;
+	}
+
+	private String generateUserCacheById(String id) {
+		return "users:id:" + id;
 	}
 }

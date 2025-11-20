@@ -1,5 +1,6 @@
 package org.tech.finalprojectadb.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -61,7 +62,12 @@ public class ProductService {
 	}
 
 	public List<Product> getAll() {
-		return productRepository.findAll();
+		List<Product> allProductCache = cacheService.getAllProductCache();
+		if (allProductCache == null) {
+			return cacheService.setAndReturnAllProductCache(productRepository.findAll());
+		} else {
+			return allProductCache;
+		}
 	}
 
 	public List<Product> getAllByIds(Set<String> ids) {
@@ -85,9 +91,6 @@ public class ProductService {
 	}
 
 	public List<Product> filterByCategory(List<Category> categories) {
-		String userId = userService.getCurrentUserId();
-		categories.forEach((cat) -> userActionService.addViewAction(userId, cat));
-
 		if (categories.size() > 1) {
 			return productRepository.findProductByCategoryIn(categories);
 		} else {

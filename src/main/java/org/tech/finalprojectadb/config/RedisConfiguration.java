@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.tech.finalprojectadb.entity.Product;
@@ -31,6 +32,13 @@ public class RedisConfiguration {
 	public LettuceConnectionFactory lettuceConnectionFactory() {
 		log.info("<<< Creating Lettuce Connection with host {} and port {}", host, port);
 		return new LettuceConnectionFactory(host, port);
+	}
+
+	@Bean
+	public StringRedisTemplate redisTemplate() {
+		StringRedisTemplate redisTemplate = new StringRedisTemplate();
+		redisTemplate.setConnectionFactory(lettuceConnectionFactory());
+		return redisTemplate;
 	}
 
 	@Bean

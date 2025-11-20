@@ -32,6 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
-
+locust_testing/
+logs/
+*.env
 
 to-do

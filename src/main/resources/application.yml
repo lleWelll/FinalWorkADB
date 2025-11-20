@@ -9,8 +9,13 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST:redis}
       port: ${SPRING_DATA_REDIS_PORT:6379}
 
+
+
 logging:
+  file:
+    name: logs/application.log
   level:
+    org.springframework.data.redis: DEBUG
     org.mongodb.driver.protocol.command: DEBUG
     org.mongodb.driver.protocol.query: DEBUG
 

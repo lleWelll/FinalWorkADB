@@ -29,6 +29,8 @@ public class UserService {
 
 	private final PasswordEncoder passwordEncoder;
 
+	private final CacheService cacheService;
+
 	public String registerNewUser(RegistrationForm form) {
 		if (isUsernameExists(form.username())) {
 			throw new UsernameAlreadyExistsException("User with username: { " + form.username() + " } already exists");
@@ -57,17 +59,30 @@ public class UserService {
 	}
 
 	public User findById(String userId) {
-		return userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User: " + userId + " is not found"));
+		String identifierType = "id";
+		return cacheService.getUserCache(userId, identifierType).orElseGet(
+				() -> {
+					User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User: " + userId + " is not found"));
+					return cacheService.setAndReturnUserCache(user, identifierType);
+				}
+		);
 	}
 
 	public User findByUsername(String username) {
-		return userRepository.findUserByUsername(username).orElseThrow(() -> new EntityNotFoundException("User: " + username + " is not found"));
+		String identifierType = "username";
+		return cacheService.getUserCache(username, identifierType).orElseGet(
+				() -> {
+					User user = userRepository.findUserByUsername(username).orElseThrow(() -> new EntityNotFoundException("User: " + username + " is not found"));
+					return cacheService.setAndReturnUserCache(user, identifierType);
+				}
+		);
 	}
 
 	public boolean isUsernameExists(String username) {
 		return userRepository.existsUserByUsername(username);
 	}
 
+	// TODO: Добавить кэш
 	private User updateUser(String id, Consumer<User> consumer) {
 		if (id == null) {
 			log.error("User is null, nothing to find");
